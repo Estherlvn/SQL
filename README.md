@@ -1,2 +1,2 @@
 # SQL
-Exercice SQL dont Recettes - HeidiSQL (Laragon)
+Exercices SQL dont Recettes - HeidiSQL (Laragon)
