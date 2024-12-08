@@ -10,14 +10,11 @@ ORDER BY preparation_time DESC;
 
 
 -- exo2. En modifiant la requête précédente, faites apparaître le nombre d’ingrédients nécessaire par recette.
-SELECT id_recipe, recipe_name, COUNT(ingredient.id_ingredient)
-AS ingredient_count
-FROM recipe
-INNER JOIN ingredient
-ON id_ingredient = ingredient.id_ingredient
-GROUP BY id_recipe
-ORDER BY id_recipe ASC;
--- A TERMINER : devrait afficher le nombre d'ingrédients PAR recette, et non pas le total de tous les ingrédients
+SELECT r.id_recipe, r.recipe_name, COUNT(ri.id_ingredient) AS ingredient_count
+FROM recipe r
+INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+GROUP BY r.id_recipe, r.recipe_name
+ORDER BY r.id_recipe ASC;
 
 
 -- 3- Afficher les recettes qui nécessitent au moins 30 min de préparation
@@ -52,17 +49,104 @@ WHERE id_recipe = 2;
 
 
 -- 8- Afficher le prix total de la recette n°5
+SELECT id_recipe , SUM(quantity * price )
+FROM recipe_ingredient ri
+INNER JOIN ingredient ing
+ON ing.id_ingredient = ri.id_ingredient
+WHERE id_recipe = 5;
+
+
 -- 9- Afficher le détail de la recette n°5 (liste des ingrédients, quantités et prix)
+SELECT id_recipe , ingredient_name, quantity, price
+FROM recipe_ingredient ri
+INNER JOIN ingredient ing
+ON ing.id_ingredient = ri.id_ingredient
+WHERE id_recipe = 5;
+
+
 -- 10- Ajouter un ingrédient en base de données : Poivre, unité : cuillère à café, prix : 2.5 €
+INSERT INTO ingredient (ingredient_name, price)
+VALUES ('Poivre', 2.5);
+
+
 -- 11- Modifier le prix de l’ingrédient n°12 (prix à votre convenance)
+UPDATE ingredient
+SET price 15
+WHERE id_ingredient = 12;
+
+
 -- 12- Afficher le nombre de recettes par catégories : X entrées, Y plats, Z desserts
+SELECT category.category_name,
+COUNT(recipe.id_recipe) AS recipes_number
+FROM recipe
+INNER JOIN category ON recipe.id_category = category.id_category
+GROUP BY category.category_name
+
+
 -- 13- Afficher les recettes qui contiennent l’ingrédient « Poulet »
+SELECT r.recipe_name
+FROM recipe r
+INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+WHERE i.ingredient_name = "Poulet";
+
+
 -- 14- Mettez à jour toutes les recettes en diminuant leur temps de préparation de 5 minutes 
+UPDATE recipe
+SET preparation_time = preparation_time - 5;
+
+
 -- 15- Afficher les recettes qui ne nécessitent pas d’ingrédients coûtant plus de 2€ par unité de mesure
+SELECT r.recipe_name
+FROM recipe r
+INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+GROUP BY r.id_recipe, r.recipe_name
+HAVING MIN(i.price) <= 2;
+
+
 -- 16- Afficher la / les recette(s) les plus rapides à préparer
--- 17- Trouver les recettes qui ne nécessitent aucun ingrédient (par exemple la recette de la tasse d’eau 
--- chaude qui consiste à verser de l’eau chaude dans une tasse)
+SELECT recipe_name, preparation_time
+FROM recipe
+WHERE preparation_time = (
+    SELECT MIN(preparation_time)
+    FROM recipe
+);
+
+
+-- 17- Trouver les recettes qui ne nécessitent aucun ingrédient
+SELECT r.recipe_name
+FROM recipe r
+LEFT JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+WHERE ri.id_ingredient IS NULL;
+
+
 -- 18- Trouver les ingrédients qui sont utilisés dans au moins 3 recettes
+SELECT i.ingredient_name, COUNT(ri.id_recipe) AS recipe_count
+FROM ingredient i
+INNER JOIN recipe_ingredient ri ON i.id_ingredient = ri.id_ingredient
+GROUP BY i.ingredient_name
+HAVING COUNT(ri.id_recipe) >= 3;
+
+
 -- 19- Ajouter un nouvel ingrédient à une recette spécifique
+INSERT INTO recipe_ingredient (quantity, unity, id_ingredient, id_recipe)
+VALUES (10, 'g', 17, 1);
+
+
 -- 20- Bonus : Trouver la recette la plus coûteuse de la base de données (il peut y avoir des ex aequo, il est 
 -- donc exclu d’utiliser la clause LIMIT)
+SELECT r.recipe_name, SUM(ri.quantity * i.price) AS total_cost
+FROM recipe r
+INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+GROUP BY r.id_recipe, r.recipe_name
+HAVING SUM(ri.quantity * i.price) = (
+    SELECT MAX(total_cost)
+    FROM (
+        SELECT SUM(ri.quantity * i.price) AS total_cost
+        FROM recipe_ingredient ri
+        INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+        GROUP BY ri.id_recipe
+    ) AS costs
+);
