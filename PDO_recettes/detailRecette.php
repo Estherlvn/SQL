@@ -10,7 +10,7 @@ try {
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $recipeId = $_GET['id'];
 
-    // Requête pour récupérer les détails de la recette avec sa catégorie
+    // REQUETE pour récupérer les DETAILS de la recette avec sa catégorie
     $sqlQuery = 'SELECT recipe.id_recipe, recipe.recipe_name, category.category_name, recipe.preparation_time 
                  FROM recipe
                  JOIN category
@@ -25,30 +25,64 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $recipe = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($recipe) {
-        // REQUETE pour récupérer les ingrédients de la recette
-        $ingredientsQuery = 'SELECT ingredient_name FROM ingredient
-                             JOIN recipe_ingredient ON ingredient.id_ingredient = recipe_ingredient.id_ingredient
+        // REQUETE pour récupérer les INGREDIENTS de la recette
+        $ingredientsQuery = 'SELECT ingredient.ingredient_name, recipe_ingredient.quantity, ingredient.price 
+                             FROM ingredient
+                             INNER JOIN recipe_ingredient ON ingredient.id_ingredient = recipe_ingredient.id_ingredient
                              WHERE recipe_ingredient.id_recipe = :id_recipe';
         
-        // La variable $ingredientsStmt devient un objet statement (ou requête préparée)
-        // qui peut ensuite être exécutée.
-        $ingredientsStmt = $mysqlClient->prepare($ingredientsQuery);                    // Préparation de la requête SQL
-        $ingredientsStmt->bindParam(':id_recipe', $recipeId, PDO::PARAM_INT);           // Liaison du paramètre :id_recipe à la variable $recipeId
-        $ingredientsStmt->execute();                                                    // Exécution de la requête préparée
-        $ingredients = $ingredientsStmt->fetchAll(PDO::FETCH_ASSOC);                    // Récupération des résultats
+        $ingredientsStmt = $mysqlClient->prepare($ingredientsQuery);                    
+        $ingredientsStmt->bindParam(':id_recipe', $recipeId, PDO::PARAM_INT);           
+        $ingredientsStmt->execute();                                                    
+        $ingredients = $ingredientsStmt->fetchAll(PDO::FETCH_ASSOC);                    
 
-        
-        // AFFICHAGE des détails de la recette
-        echo "<h1>Détail de la recette : " . htmlspecialchars($recipe['recipe_name']) . "</h1>";
-        echo "<p><strong>Catégorie:</strong> " . htmlspecialchars($recipe['category_name']) . "</p>";
-        echo "<p><strong>Temps de préparation:</strong> " . htmlspecialchars($recipe['preparation_time']) . " minutes</p>";
-        
-        echo "<h2>Ingrédients:</h2>";
-        echo "<ul>";
-        foreach ($ingredients as $ingredient) {
-            echo "<li>" . htmlspecialchars($ingredient['ingredient_name']) . "</li>";
-        }
-        echo "</ul>";
+        // AFFICHAGE avec HTML
+        ?>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Détail de la recette</title>
+            <style>
+                table {
+                    width: 60%;
+                    border-collapse: collapse;
+                }
+                table, th, td {
+                    border: 1px solid black;
+                }
+                th, td {
+                    padding: 8px;
+                    text-align: left;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Fiche recette: <br><br> <?= htmlspecialchars($recipe['recipe_name']) ?></h1>
+            <p><strong>Catégorie:</strong> <?= htmlspecialchars($recipe['category_name']) ?></p>
+            <p><strong>Temps de préparation:</strong> <?= htmlspecialchars($recipe['preparation_time']) ?> minutes</p>
+            
+            <h2>Ingrédients:</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom de l'ingrédient</th>
+                        <th>Quantité</th>
+                        <th>Prix</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($ingredients as $ingredient): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($ingredient['ingredient_name']) ?></td>
+                            <td><?= htmlspecialchars($ingredient['quantity']) ?></td>
+                            <td><?= htmlspecialchars($ingredient['price']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </body>
+        </html>
+        <?php
 
     } else {
         echo "<p>Recette non trouvée.</p>";
@@ -56,6 +90,4 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 } else {
     echo "<p>Recette invalide.</p>"; // Si l'ID passé dans l'URL n'est pas valide ou absent
 }
-
-
 ?>
