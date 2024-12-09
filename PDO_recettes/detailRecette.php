@@ -32,10 +32,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         
         // La variable $ingredientsStmt devient un objet statement (ou requête préparée)
         // qui peut ensuite être exécutée.
-        $ingredientsStmt = $mysqlClient->prepare($ingredientsQuery); // Préparation de la requête SQL
-        $ingredientsStmt->bindParam(':id_recipe', $recipeId, PDO::PARAM_INT); // Liaison du paramètre :id_recipe à la variable $recipeId
-        $ingredientsStmt->execute(); // Exécution de la requête préparée
-        $ingredients = $ingredientsStmt->fetchAll(PDO::FETCH_ASSOC); // Récupération des résultats
+        $ingredientsStmt = $mysqlClient->prepare($ingredientsQuery);                    // Préparation de la requête SQL
+        $ingredientsStmt->bindParam(':id_recipe', $recipeId, PDO::PARAM_INT);           // Liaison du paramètre :id_recipe à la variable $recipeId
+        $ingredientsStmt->execute();                                                    // Exécution de la requête préparée
+        $ingredients = $ingredientsStmt->fetchAll(PDO::FETCH_ASSOC);                    // Récupération des résultats
 
         
         // AFFICHAGE des détails de la recette
@@ -56,4 +56,6 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 } else {
     echo "<p>Recette invalide.</p>"; // Si l'ID passé dans l'URL n'est pas valide ou absent
 }
+
+
 ?>
