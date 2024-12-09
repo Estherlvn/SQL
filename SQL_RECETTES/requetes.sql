@@ -13,8 +13,8 @@ ORDER BY preparation_time DESC;
 SELECT r.id_recipe, r.recipe_name, COUNT(ri.id_ingredient) AS ingredient_count
 FROM recipe r
 INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
-GROUP BY r.id_recipe, r.recipe_name
-ORDER BY r.id_recipe ASC;
+GROUP BY r.id_recipe
+ORDER BY ingredient_count DESC;
 
 
 -- 3- Afficher les recettes qui nécessitent au moins 30 min de préparation
@@ -80,7 +80,7 @@ SELECT category.category_name,
 COUNT(recipe.id_recipe) AS recipes_number
 FROM recipe
 INNER JOIN category ON recipe.id_category = category.id_category
-GROUP BY category.category_name
+GROUP BY category_name;
 
 
 -- 13- Afficher les recettes qui contiennent l’ingrédient « Poulet »
@@ -101,7 +101,7 @@ SELECT r.recipe_name
 FROM recipe r
 INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
 INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
-GROUP BY r.id_recipe, r.recipe_name
+GROUP BY recipe_name
 HAVING MIN(i.price) <= 2;
 
 
@@ -120,12 +120,22 @@ FROM recipe r
 LEFT JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
 WHERE ri.id_ingredient IS NULL;
 
+-- Avec la clause NOT IN
+SELECT r.recipe_name
+FROM recipe r
+WHERE r.id_recipe NOT IN (
+    SELECT ri.id_recipe
+    FROM recipe_ingredient ri
+    INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+    WHERE i.price > 2
+);
+
 
 -- 18- Trouver les ingrédients qui sont utilisés dans au moins 3 recettes
 SELECT i.ingredient_name, COUNT(ri.id_recipe) AS recipe_count
 FROM ingredient i
 INNER JOIN recipe_ingredient ri ON i.id_ingredient = ri.id_ingredient
-GROUP BY i.ingredient_name
+GROUP BY ingredient_name
 HAVING COUNT(ri.id_recipe) >= 3;
 
 
@@ -147,6 +157,17 @@ HAVING SUM(ri.quantity * i.price) = (
         SELECT SUM(ri.quantity * i.price) AS total_cost
         FROM recipe_ingredient ri
         INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
-        GROUP BY ri.id_recipe
+        GROUP BY id_recipe
     ) AS costs
 );
+
+-- Avec HAVING + ALL
+SELECT r.recipe_name
+FROM recipe r
+INNER JOIN recipe_ingredient ri ON r.id_recipe = ri.id_recipe
+INNER JOIN ingredient i ON ri.id_ingredient = i.id_ingredient
+GROUP BY r.id_recipe, r.recipe_name
+HAVING MAX(i.price) <= 2;
+
+
+-----END
